@@ -73,7 +73,7 @@ fn parse_input(input: &str) -> Result<Vec<String>> {
     let mut buf = String::new();
     let mut in_single_quotes = false;
     let mut in_double_quotes = false;
-    let mut chars = input.chars();
+    let mut chars = input.chars().peekable();
     while let Some(c) = chars.next() {
         match c {
             ' ' => {
@@ -88,13 +88,22 @@ fn parse_input(input: &str) -> Result<Vec<String>> {
                 }
             }
             '\\' => {
-                if !in_single_quotes && !in_double_quotes {
-                    if let Some(next_char) = chars.next() {
-                        buf.push(next_char)
-                    }
+                if !in_single_quotes
+                    && !in_double_quotes
+                    && let Some(next_char) = chars.next()
+                {
+                    buf.push(next_char)
                 }
                 if in_single_quotes {
                     buf.push(c);
+                }
+                if in_double_quotes && let Some(&c) = chars.peek() {
+                    // unwrap safe as the peek returns Some
+                    match c {
+                        '\"' => buf.push(chars.next().unwrap()),
+                        '\\' => buf.push(chars.next().unwrap()),
+                        _ => buf.push('\\'),
+                    }
                 }
             }
             '\'' => {
@@ -102,19 +111,11 @@ fn parse_input(input: &str) -> Result<Vec<String>> {
                     buf.push(c);
                     continue;
                 }
-                if in_single_quotes {
-                    in_single_quotes = false;
-                } else {
-                    in_single_quotes = true;
-                }
+                in_single_quotes = !in_single_quotes;
             }
             '\"' => {
                 if !in_single_quotes {
-                    if in_double_quotes {
-                        in_double_quotes = false;
-                    } else {
-                        in_double_quotes = true;
-                    }
+                    in_double_quotes = !in_double_quotes;
                 } else {
                     buf.push(c);
                 }
