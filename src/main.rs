@@ -43,7 +43,6 @@ fn main() -> anyhow::Result<()> {
         let Ok(command_list) = parse_input(input) else {
             continue;
         };
-        println!("{:?}", command_list);
 
         if let Ok(command) = Builtin::from_str(&command_list[0]) {
             match command {
