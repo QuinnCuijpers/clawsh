@@ -2,7 +2,12 @@ use anyhow::{Context, anyhow};
 use faccess::PathExt;
 #[allow(unused_imports)]
 use std::io::{self, Write};
-use std::{env::{current_dir, set_current_dir}, path::{Path, PathBuf}, process::Command, str::FromStr};
+use std::{
+    env::{current_dir, set_current_dir},
+    path::PathBuf,
+    process::Command,
+    str::FromStr,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Builtin {
@@ -45,7 +50,7 @@ fn main() -> anyhow::Result<()> {
             }
             if let Some(idx) = s2.find("\"") {
                 let mut combined = s1.to_string();
-                combined.push_str(" ");
+                combined.push(' ');
                 combined.push_str(&s2[..idx + 1]);
                 s2 = &s2[idx + 1..];
                 command_list.push(combined);
@@ -73,7 +78,7 @@ fn main() -> anyhow::Result<()> {
                 panic!("PATH env var not set");
             };
             let exec = &command_list[0];
-            if let Some(_) = find_exec_file(exec, env_path) {
+            if find_exec_file(exec, env_path).is_some() {
                 let mut output = Command::new(exec).args(&command_list[1..]).spawn()?;
                 output.wait()?;
                 continue;
@@ -91,7 +96,7 @@ fn invoke_echo(cmd_list: &[String]) {
 
 fn invoke_type(cmd_list: &[String]) {
     for cmd in cmd_list {
-        if let Ok(_) = Builtin::from_str(cmd) {
+        if Builtin::from_str(cmd).is_ok() {
             println!("{cmd} is a shell builtin");
             return;
         }
@@ -99,7 +104,7 @@ fn invoke_type(cmd_list: &[String]) {
         let Some(env_path) = std::env::var_os("PATH") else {
             panic!("PATH env var not set");
         };
-        if let Some(file_path) = find_exec_file(&cmd, env_path) {
+        if let Some(file_path) = find_exec_file(cmd, env_path) {
             println!("{cmd} is {}", file_path.display());
         } else {
             println!("{cmd}: not found");
@@ -113,13 +118,11 @@ fn find_exec_file(cmd: &str, env_path: std::ffi::OsString) -> Option<PathBuf> {
             if !exists {
                 continue;
             }
-            for dir in path.read_dir().expect("dir should exist") {
-                if let Ok(dir) = dir {
-                    let file_name = dir.file_name();
-                    let file_path = dir.path();
-                    if file_name == cmd && file_path.executable() {
-                        return Some(file_path);
-                    }
+            for dir in path.read_dir().expect("dir should exist").flatten() {
+                let file_name = dir.file_name();
+                let file_path = dir.path();
+                if file_name == cmd && file_path.executable() {
+                    return Some(file_path);
                 }
             }
         }
@@ -135,15 +138,14 @@ fn invoke_pwd(_cmd_list: &[String]) {
 
 fn invoke_cd(cmd_list: &[String]) {
     assert!(cmd_list.len() == 1);
-
-    let path = Path::new(&cmd_list[0]);
+    let path = match cmd_list[0].as_str() {
+        "~" => PathBuf::from(&std::env::var_os("HOME").expect("HOME env key not set")),
+        _ => PathBuf::from(&cmd_list[0]),
+    };
     if path.exists() {
-        match set_current_dir(path) {
-            Ok(()) => return,
-            Err(e) => panic!("could not cd to {} due to {e}", path.display()),
-        }
-    }
-    else {
+        // if cd fails then proceed to next REPL iter
+        let _ = set_current_dir(path);
+    } else {
         println!("cd: {}: No such file or directory", path.display());
     }
 }
