@@ -2,7 +2,7 @@ use anyhow::{Context, anyhow};
 use faccess::PathExt;
 #[allow(unused_imports)]
 use std::io::{self, Write};
-use std::{env::current_dir, path::PathBuf, process::Command, str::FromStr};
+use std::{env::{current_dir, set_current_dir}, path::{Path, PathBuf}, process::Command, str::FromStr};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Builtin {
@@ -10,6 +10,7 @@ enum Builtin {
     Exit,
     Tipe,
     Pwd,
+    Cd,
 }
 
 impl FromStr for Builtin {
@@ -21,6 +22,7 @@ impl FromStr for Builtin {
             "exit" => Ok(Builtin::Exit),
             "type" => Ok(Builtin::Tipe),
             "pwd" => Ok(Builtin::Pwd),
+            "cd" => Ok(Builtin::Cd),
             _ => Err(anyhow!(format!("unknown builtin {s}"))),
         }
     }
@@ -56,13 +58,14 @@ fn main() -> anyhow::Result<()> {
         if !input.is_empty() {
             command_list.push(input.to_string());
         }
-        
+
         if let Ok(command) = Builtin::from_str(&command_list[0]) {
             match command {
                 Builtin::Echo => invoke_echo(&command_list[1..]),
                 Builtin::Exit => break,
                 Builtin::Tipe => invoke_type(&command_list[1..]),
                 Builtin::Pwd => invoke_pwd(&command_list[1..]),
+                Builtin::Cd => invoke_cd(&command_list[1..]),
             }
         } else {
             // TODO: add support for executing files
@@ -127,5 +130,20 @@ fn find_exec_file(cmd: &str, env_path: std::ffi::OsString) -> Option<PathBuf> {
 fn invoke_pwd(_cmd_list: &[String]) {
     if let Ok(curr) = current_dir() {
         println!("{}", curr.display());
+    }
+}
+
+fn invoke_cd(cmd_list: &[String]) {
+    assert!(cmd_list.len() == 1);
+
+    let path = Path::new(&cmd_list[0]);
+    if path.exists() {
+        match set_current_dir(path) {
+            Ok(()) => return,
+            Err(e) => panic!("could not cd to {} due to {e}", path.display()),
+        }
+    }
+    else {
+        println!("cd: {}: No such file or directory", path.display());
     }
 }
