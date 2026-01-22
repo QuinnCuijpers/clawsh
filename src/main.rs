@@ -5,7 +5,7 @@ use std::io::{self, Write};
 use std::{
     env::{current_dir, set_current_dir},
     path::PathBuf,
-    process::{Command},
+    process::Command,
     str::FromStr,
 };
 
@@ -71,11 +71,12 @@ fn main() -> anyhow::Result<()> {
 fn parse_input(input: &str) -> Result<Vec<String>> {
     let mut command_list = vec![];
     let mut buf = String::new();
-    let mut in_quote = false;
+    let mut in_single_quotes = false;
+    let mut in_double_quotes = false;
     for c in input.chars() {
         match c {
             ' ' => {
-                if in_quote {
+                if in_single_quotes || in_double_quotes {
                     buf.push(c);
                 } else {
                     if buf.is_empty() {
@@ -86,10 +87,21 @@ fn parse_input(input: &str) -> Result<Vec<String>> {
                 }
             }
             '\'' => {
-                if in_quote {
-                    in_quote = false;
+                if in_double_quotes {
+                    buf.push(c);
+                    continue;
+                }
+                if in_single_quotes {
+                    in_single_quotes = false;
                 } else {
-                    in_quote = true;
+                    in_single_quotes = true;
+                }
+            }
+            '\"' => {
+                if in_double_quotes {
+                    in_double_quotes = false;
+                } else {
+                    in_double_quotes = true;
                 }
             }
             _ => buf.push(c),
