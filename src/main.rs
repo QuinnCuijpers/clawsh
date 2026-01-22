@@ -87,9 +87,14 @@ fn parse_input(input: &str) -> Result<Vec<String>> {
                     buf.clear();
                 }
             }
-            '\\' => if !in_single_quotes && !in_double_quotes {
-                if let Some(next_char) = chars.next() {
-                    buf.push(next_char)
+            '\\' => {
+                if !in_single_quotes && !in_double_quotes {
+                    if let Some(next_char) = chars.next() {
+                        buf.push(next_char)
+                    }
+                }
+                if in_single_quotes {
+                    buf.push(c);
                 }
             }
             '\'' => {
@@ -104,10 +109,14 @@ fn parse_input(input: &str) -> Result<Vec<String>> {
                 }
             }
             '\"' => {
-                if in_double_quotes {
-                    in_double_quotes = false;
+                if !in_single_quotes {
+                    if in_double_quotes {
+                        in_double_quotes = false;
+                    } else {
+                        in_double_quotes = true;
+                    }
                 } else {
-                    in_double_quotes = true;
+                    buf.push(c);
                 }
             }
             _ => buf.push(c),
