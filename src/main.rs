@@ -56,8 +56,7 @@ fn main() -> anyhow::Result<()> {
         if !input.is_empty() {
             command_list.push(input.to_string());
         }
-
-        println!("{:?}", command_list);
+        
         if let Ok(command) = Builtin::from_str(&command_list[0]) {
             match command {
                 Builtin::Echo => invoke_echo(&command_list[1..]),
