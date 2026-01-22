@@ -1,14 +1,13 @@
-#[allow(unused_imports)]
-use std::io::{self, Write};
-use std::{path::PathBuf, str::FromStr};
-
 use anyhow::{Context, anyhow};
 use faccess::PathExt;
+#[allow(unused_imports)]
+use std::io::{self, Write};
+use std::{path::PathBuf, process::Command, str::FromStr};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Builtin {
     Echo,
-    Exit, 
+    Exit,
     Tipe,
 }
 
@@ -26,7 +25,6 @@ impl FromStr for Builtin {
 }
 
 fn main() -> anyhow::Result<()> {
-    // TODO: Uncomment the code below to pass the first stage
     loop {
         print!("$ ");
         io::stdout().flush().context("flushing stdout")?;
@@ -41,6 +39,16 @@ fn main() -> anyhow::Result<()> {
                 Builtin::Tipe => invoke_type(&command_list[1..]),
             }
         } else {
+            // TODO: add support for executing files
+            let Some(env_path) = std::env::var_os("PATH") else {
+                panic!("PATH env var not set");
+            };
+            let exec = command_list[0];
+            if let Some(_) = find_exec_file(exec, env_path) {
+                let output = Command::new(exec).args(&command_list[1..]).output()?;
+                io::stdout().write_all(&output.stdout)?;
+                continue;
+            }
             println!("{input}: command not found")
         }
     }
@@ -53,11 +61,11 @@ fn invoke_echo(cmd_list: &[&str]) {
 }
 
 fn invoke_type(cmd_list: &[&str]) {
-    for cmd in cmd_list {
+    for &cmd in cmd_list {
         if let Ok(_) = Builtin::from_str(cmd) {
             println!("{cmd} is a shell builtin");
             return;
-        } 
+        }
         // go through every directory and check if a file with the name exist that has exec permissions
         let Some(env_path) = std::env::var_os("PATH") else {
             panic!("PATH env var not set");
@@ -70,7 +78,7 @@ fn invoke_type(cmd_list: &[&str]) {
     }
 }
 
-fn find_exec_file(cmd: &&str, env_path: std::ffi::OsString) -> Option<PathBuf> {
+fn find_exec_file(cmd: &str, env_path: std::ffi::OsString) -> Option<PathBuf> {
     for path in std::env::split_paths(&env_path) {
         if let Ok(exists) = path.try_exists() {
             if !exists {
@@ -80,7 +88,7 @@ fn find_exec_file(cmd: &&str, env_path: std::ffi::OsString) -> Option<PathBuf> {
                 if let Ok(dir) = dir {
                     let file_name = dir.file_name();
                     let file_path = dir.path();
-                    if file_name == *cmd && file_path.executable() {
+                    if file_name == cmd && file_path.executable() {
                         return Some(file_path);
                     }
                 }
