@@ -93,7 +93,7 @@ fn handle_builtin<'a, I>(builtin_out: Option<String>, token_iter: I)
 where
     I: IntoIterator<Item = &'a Token>,
 {
-    let Some(builtin_out) = builtin_out else {
+    let Some(mut builtin_out) = builtin_out else {
         return;
     };
     let mut iter = token_iter.into_iter();
@@ -109,13 +109,16 @@ where
                     return;
                 };
 
+                // when writing to files linux adds a newline character at the end
+                builtin_out.push('\n');
+
                 std::fs::write(file_name, builtin_out)
                     .expect("can only fail if parent dir doesn't exist");
             } else {
                 eprintln! {"expected file name after redirection"};
             };
         }
-        Some(t) => eprintln!("found: {:?}", t),
+        Some(_t) => unreachable!(),
     }
 }
 
@@ -139,13 +142,15 @@ where
                 if let Some(parent_dir) = file_path.parent() {
                     std::fs::create_dir_all(parent_dir)?;
                 }
-                let file = File::open(file_path)?;
+                let file = File::create(file_path)?;
                 command.stdout(Stdio::from(file));
+                let mut child = command.spawn()?;
+                child.wait()?;
             } else {
                 eprintln! {"expected file name after redirection"};
             };
         }
-        Some(t) => eprintln!("found: {:?}", t),
+        Some(_t) => unreachable!(),
     }
     Ok(())
 }
@@ -249,16 +254,22 @@ where
 {
     use std::fmt::Write;
     let mut buf = String::new();
-    for cmd in cmd_list {
+    for (i, cmd) in cmd_list.into_iter().enumerate() {
         let cmd = cmd.as_ref();
+        let cmd_str = if i != 0 {
+            format!("\n{cmd}")
+        } else {
+            cmd.to_string()
+        };
+        let cmd_str = cmd_str.as_str();
         if Builtin::from_str(cmd).is_ok() {
-            let _ = writeln!(buf, "{cmd} is a shell builtin");
+            let _ = write!(buf, "{cmd_str} is a shell builtin");
         }
         // go through every directory and check if a file with the name exist that has exec permissions
-        if let Some(file_path) = find_exec_file(cmd) {
-            let _ = writeln!(buf, "{cmd} is {}", file_path.display());
+        else if let Some(file_path) = find_exec_file(cmd) {
+            let _ = write!(buf, "{cmd_str} is {}", file_path.display());
         } else {
-            let _ = writeln!(buf, "{cmd}: not found");
+            let _ = write!(buf, "{cmd_str}: not found");
         }
     }
     buf
