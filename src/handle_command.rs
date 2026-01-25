@@ -1,5 +1,9 @@
 use std::{
-    ffi::OsStr, fs::File, io::Write, path::PathBuf, process::{Command, Stdio}
+    ffi::OsStr,
+    fs::File,
+    io::Write,
+    path::PathBuf,
+    process::{Command, Stdio},
 };
 
 use crate::input_parsing::Token;
@@ -28,6 +32,7 @@ where
 
                 let mut file_options = File::options();
                 file_options.create(true).write(true);
+                
                 match c.as_str() {
                     ">" | "1>" => {
                         let file = file_options.open(file_path)?;
@@ -35,6 +40,10 @@ where
                     }
                     "2>" => {
                         let file = file_options.open(file_path)?;
+                        command.stderr(Stdio::from(file));
+                    }
+                    "2>>" => {
+                        let file = file_options.append(true).open(file_path)?;
                         command.stderr(Stdio::from(file));
                     }
                     ">>" | "1>>" => {
@@ -75,8 +84,20 @@ where
                     return;
                 };
 
+                let mut file_options = File::options();
+                file_options.create(true).write(true);
+
                 if c == "2>" {
-                    File::create(&file_path).expect("unable to create file");
+                    let _ = file_options
+                        .open(file_path)
+                        .expect("couldnt open file for redirecting stderr");
+                    println!("{builtin_out}");
+                    return;
+                } else if c == "2>>" {
+                    file_options.append(true);
+                    let _ = file_options
+                        .open(file_path)
+                        .expect("couldnt open file for appending stderr");
                     println!("{builtin_out}");
                     return;
                 }
@@ -84,14 +105,13 @@ where
                 // when writing to files linux adds a newline character at the end
                 builtin_out.push('\n');
 
-                let mut file_options = File::options();
-                file_options.create(true).write(true);
-
                 if c == ">>" || c == "1>>" {
                     file_options.append(true);
                 }
 
-                let mut file = file_options.open(file_path).expect("couldnt open file for stdout redirection");
+                let mut file = file_options
+                    .open(file_path)
+                    .expect("couldnt open file for stdout redirection");
                 let _ = file.write_all(builtin_out.as_bytes());
             } else {
                 eprintln! {"expected file name after redirection"};

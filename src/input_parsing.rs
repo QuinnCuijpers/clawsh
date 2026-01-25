@@ -104,7 +104,7 @@ pub(crate) fn tokenize_input(input: Vec<String>) -> Option<Vec<Token>> {
 
     for s in iter {
         match s.as_str() {
-            ">" | "1>" | "2>" | ">>" | "1>>" => tokenized.push(Token::Pipe(s)),
+            ">" | "1>" | "2>" | ">>" | "1>>" | "2>>" => tokenized.push(Token::Pipe(s)),
             _ => tokenized.push(Token::Arg(s)),
         }
     }

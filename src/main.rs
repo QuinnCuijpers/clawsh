@@ -30,6 +30,7 @@ fn main() -> anyhow::Result<()> {
         let Some(tokens) = tokenize_input(command_list) else {
             continue;
         };
+        // println!("{:?}", tokens);
         let mut token_iter = tokens.iter().peekable();
 
         let command = token_iter.next().unwrap();
