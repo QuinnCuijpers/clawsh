@@ -1,54 +1,85 @@
-use rustyline::{Helper, Highlighter, Hinter, Validator, completion::Completer};
 use crate::trie::TrieNode;
-
+use faccess::PathExt;
+use rustyline::{Helper, Highlighter, Hinter, Validator, completion::Completer};
+use crate::trie::TRIE_ASCII_SIZE;
 
 #[derive(Debug, Helper, Highlighter, Validator, Hinter)]
 pub struct TrieCompleter {
-    trie: TrieNode<26>
+    builtin_trie: TrieNode<TRIE_ASCII_SIZE>,
 }
 
 impl TrieCompleter {
-    pub(crate) fn new(words: &[&str]) -> Self {
-        let mut trie = TrieNode::new();
-        for word in words {
-            trie.insert(word);
+    pub(crate) fn with_builtin_commands(builtin_words: &[&str]) -> Self {
+        let mut builtin_trie = TrieNode::new();
+        for word in builtin_words {
+            builtin_trie.insert(word);
         }
-        Self { trie }
+
+        Self {
+            builtin_trie,
+        }
+    }
+
+    pub(crate) fn get_external_candidates(&self, prefix: &str) -> Option<Vec<String>> {
+        let Some(env_path) = std::env::var_os("PATH") else {
+            eprintln!("PATH env var not set");
+            return None;
+        };
+
+        let mut external_trie: TrieNode<TRIE_ASCII_SIZE> = TrieNode::new();
+        for path in std::env::split_paths(&env_path) {
+            if let Ok(exists) = path.try_exists() {
+                if !exists {
+                    continue;
+                }
+                for file in path.read_dir().unwrap() {
+                    if let Ok(entry) = file {
+                        let file_path = entry.path();
+                        let file_name = entry.file_name();
+                        let name_str = file_name.to_str();
+                        let Some(name_str) = name_str else {
+                            continue;
+                        };
+                        if name_str.starts_with(prefix) && file_path.executable() {
+                            external_trie.insert(name_str);
+                        }
+                    }
+                }
+            }
+        }
+        external_trie.auto_complete(prefix)
     }
 }
 
 impl Completer for TrieCompleter {
     type Candidate = String;
-    
+
     fn complete(
         &self, // FIXME should be `&mut self`
         line: &str,
         _pos: usize,
         _ctx: &rustyline::Context<'_>,
     ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
-        let Some(mut candidates) = self.trie.auto_complete(line) else {
-            return Ok((0, vec![]));
-        };
+        let mut candidates= self.builtin_trie.auto_complete(line).unwrap_or(vec![]);
+
+        let mut external_candidates = self.get_external_candidates(line).unwrap_or(vec![]);
+        
+        candidates.append(&mut external_candidates);
+
         for s in candidates.iter_mut() {
             s.push(' ');
         }
         Ok((0, candidates))
     }
-    
-    fn update(&self, line: &mut rustyline::line_buffer::LineBuffer, start: usize, elected: &str, cl: &mut rustyline::Changeset) {
+
+    fn update(
+        &self,
+        line: &mut rustyline::line_buffer::LineBuffer,
+        start: usize,
+        elected: &str,
+        cl: &mut rustyline::Changeset,
+    ) {
         let end = line.pos();
         line.replace(start..end, elected, cl);
     }
-
-    
 }
-
-
-// let config = Config::builder()
-//         .completion_type(CompletionType::List)
-//         .completion_show_all_if_ambiguous(true)
-//         .build();
-//     let mut rl: Editor<(), FileHistory> = Editor::with_config(config)?;
-//     if rl.load_history("history.txt").is_err() {
-//         println!("No previous history.");
-//     }

@@ -1,9 +1,9 @@
 mod handle_command;
 mod input_parsing;
 mod invoke;
+mod readline;
 mod trie;
 mod util;
-mod readline;
 
 use anyhow::Context;
 use handle_command::{handle_builtin, handle_external_exec};
@@ -24,8 +24,10 @@ use crate::util::find_exec_file;
 
 fn main() -> anyhow::Result<()> {
     loop {
-        let helper = TrieCompleter::new(&BUILTIN_COMMANDS);
-        let config = Config::builder().completion_show_all_if_ambiguous(true).build();
+        let helper = TrieCompleter::with_builtin_commands(&BUILTIN_COMMANDS);
+        let config = Config::builder()
+            .completion_show_all_if_ambiguous(true)
+            .build();
         let mut rl = Editor::with_config(config)?;
         rl.set_helper(Some(helper));
         let readline = rl.readline("$ ");
