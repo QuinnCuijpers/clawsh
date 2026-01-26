@@ -1,7 +1,9 @@
 mod handle_command;
 mod input_parsing;
 mod invoke;
+mod trie;
 mod util;
+mod readline;
 
 use anyhow::Context;
 use handle_command::{handle_builtin, handle_external_exec};
@@ -10,20 +12,44 @@ use input_parsing::Token;
 use input_parsing::parse_input;
 use input_parsing::tokenize_input;
 use invoke::{invoke_cd, invoke_echo, invoke_pwd, invoke_type};
-#[allow(unused_imports)]
+use rustyline::Config;
+use rustyline::Editor;
+use rustyline::error::ReadlineError;
 use std::io::{self, Write};
 use std::str::FromStr;
 
+use crate::input_parsing::BUILTIN_COMMANDS;
+use crate::readline::TrieCompleter;
 use crate::util::find_exec_file;
 
 fn main() -> anyhow::Result<()> {
     loop {
-        print!("$ ");
+        let helper = TrieCompleter::new(&BUILTIN_COMMANDS);
+        let config = Config::builder().completion_show_all_if_ambiguous(true).build();
+        let mut rl = Editor::with_config(config)?;
+        rl.set_helper(Some(helper));
+        let readline = rl.readline("$ ");
         io::stdout().flush().context("flushing stdout")?;
-        let mut buf = String::new();
-        let _ = io::stdin().read_line(&mut buf).context("reading stdin")?;
-        let input = buf.trim_end();
-        let Ok(command_list) = parse_input(input) else {
+        let input = match readline {
+            Ok(line) => {
+                rl.add_history_entry(line.as_str())?;
+                line
+            }
+            Err(ReadlineError::Interrupted) => {
+                println!("CTRL-C");
+                break;
+            }
+            Err(ReadlineError::Eof) => {
+                println!("CTRL-D");
+                break;
+            }
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break;
+            }
+        };
+        let trimmed_input = input.trim_end();
+        let Ok(command_list) = parse_input(trimmed_input) else {
             continue;
         };
 

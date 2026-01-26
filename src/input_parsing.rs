@@ -8,6 +8,8 @@ pub enum Token {
     Arg(String),
 }
 
+pub(crate) const BUILTIN_COMMANDS: [&str; 5] = ["echo", "exit", "type", "pwd", "cd"];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Builtin {
     Echo,

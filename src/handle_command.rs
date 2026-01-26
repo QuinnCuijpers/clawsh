@@ -32,7 +32,7 @@ where
 
                 let mut file_options = File::options();
                 file_options.create(true).write(true);
-                
+
                 match c.as_str() {
                     ">" | "1>" => {
                         let file = file_options.open(file_path)?;
