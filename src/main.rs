@@ -13,7 +13,9 @@ use rustyline::CompletionType;
 use rustyline::Config;
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
+use std::fs::File;
 use std::io::{self, Write};
+use std::path::Path;
 
 use crate::handle_command::handle_command;
 use crate::input_parsing::BUILTIN_COMMANDS;
@@ -27,6 +29,7 @@ fn main() -> anyhow::Result<()> {
             .build();
         let mut rl = Editor::with_config(config)?;
         rl.set_helper(Some(helper));
+        let _ = rl.load_history("history.txt");
         let readline = rl.readline("$ ");
         io::stdout().flush().context("flushing stdout")?;
         let input = match readline {
@@ -69,6 +72,14 @@ fn main() -> anyhow::Result<()> {
             break;
         }
 
+        if cmd_str == "history" {
+            let history = rl.history();
+            for (i, entry) in history.iter().enumerate() {
+                println!("  {} {}", i+1, entry);
+            }
+            continue;
+        }
+
         let mut args = vec![];
         while let Some(Token::Arg(s)) = token_iter.peek() {
             args.push(s);
@@ -76,6 +87,12 @@ fn main() -> anyhow::Result<()> {
         }
 
         handle_command(cmd_str, args.iter(), &mut token_iter)?;
+        if Path::new("history.txt").exists() {
+            rl.append_history("history.txt")?;
+        } else {
+            File::create("history.txt")?;
+            rl.append_history("history.txt")?;
+        }
     }
     anyhow::Ok(())
 }
