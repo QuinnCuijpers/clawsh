@@ -9,7 +9,7 @@ pub enum Token {
     Pipe(String), //TODO: may not require to hold data as only one character creates this
 }
 
-pub(crate) const BUILTIN_COMMANDS: [&str; 5] = ["echo", "exit", "type", "pwd", "cd"];
+pub(crate) const BUILTIN_COMMANDS: [&str; 6] = ["echo", "exit", "type", "pwd", "cd", "history"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Builtin {

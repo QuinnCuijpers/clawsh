@@ -1,12 +1,14 @@
 use crate::input_parsing::Builtin;
 use crate::util::find_exec_file;
 use anyhow::Result;
-use std::{env, ffi::OsStr, path::PathBuf, str::FromStr};
+use rustyline::history::History;
+use std::{cmp::min, env, ffi::OsStr, path::PathBuf, str::FromStr};
 
-pub(crate) fn invoke_builtin<I, S>(cmd: Builtin, args: I) -> Option<String>
+pub(crate) fn invoke_builtin<I, S, H>(cmd: Builtin, args: I, history: &H) -> Option<String>
 where
     I: Iterator<Item = S>,
     S: AsRef<OsStr>,
+    H: History,
 {
     let args_str: Vec<_> = args
         .map(|s| s.as_ref().to_str().unwrap().to_string())
@@ -17,8 +19,37 @@ where
         Builtin::Tipe => Some(invoke_type(args_str)),
         Builtin::Pwd => Some(invoke_pwd(args_str).unwrap()),
         Builtin::Cd => invoke_cd(args_str),
-        Builtin::History => unreachable!(),
+        Builtin::History => invoke_history(args_str, history),
     }
+}
+
+fn invoke_history<H>(args_str: Vec<String>, history: &H) -> Option<String>
+where
+    H: History,
+{
+    let length = if let Some(arg) = args_str.iter().next() {
+        match arg.as_str() {
+            s if s.parse::<usize>().is_ok() => {
+                let n: usize = s.parse().unwrap();
+                min(n, history.len())
+            }
+            _ => history.len() ,
+        }
+    } else {
+        history.len()
+    };
+
+    use std::fmt::Write;
+    let mut buf = String::new();
+    for i in 0..length {
+        let entry_idx = history.len() - length + i;
+        let entry = history
+            .get(entry_idx, rustyline::history::SearchDirection::Reverse)
+            .unwrap()?
+            .entry;
+        let _ = writeln!(buf, "  {} {}", entry_idx + 1, entry);
+    }
+    if buf.is_empty() { None } else { Some(buf) }
 }
 
 pub(crate) fn invoke_pwd<I, S>(_cmd_list: I) -> Result<String>
@@ -36,7 +67,10 @@ where
     S: AsRef<str>,
 {
     let cmd_list: Vec<_> = cmd_list.into_iter().collect();
-    assert!(cmd_list.len() == 1);
+    if cmd_list.is_empty() {
+        return None;
+    }
+
     let path = match cmd_list[0].as_ref() {
         "~" => PathBuf::from(&std::env::var_os("HOME").expect("HOME env key not set")),
         _ => PathBuf::from(&cmd_list[0].as_ref()),
@@ -46,7 +80,10 @@ where
         let _ = env::set_current_dir(path);
         None
     } else {
-        Some(format!("cd: {}: No such file or directory\n", path.display()))
+        Some(format!(
+            "cd: {}: No such file or directory\n",
+            path.display()
+        ))
     }
 }
 

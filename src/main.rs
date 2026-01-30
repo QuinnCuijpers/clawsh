@@ -12,8 +12,10 @@ use input_parsing::tokenize_input;
 use rustyline::CompletionType;
 use rustyline::Config;
 use rustyline::Editor;
+use rustyline::config::Configurer;
 use rustyline::error::ReadlineError;
 use std::fs::File;
+use std::fs::remove_file;
 use std::io::{self, Write};
 use std::path::Path;
 
@@ -22,6 +24,7 @@ use crate::input_parsing::BUILTIN_COMMANDS;
 use crate::readline::TrieCompleter;
 
 fn main() -> anyhow::Result<()> {
+    File::create("history.txt")?;
     loop {
         let helper = TrieCompleter::with_builtin_commands(&BUILTIN_COMMANDS);
         let config = Config::builder()
@@ -72,27 +75,25 @@ fn main() -> anyhow::Result<()> {
             break;
         }
 
-        if cmd_str == "history" {
-            let history = rl.history();
-            for (i, entry) in history.iter().enumerate() {
-                println!("  {} {}", i+1, entry);
-            }
-            continue;
-        }
-
         let mut args = vec![];
         while let Some(Token::Arg(s)) = token_iter.peek() {
             args.push(s);
             token_iter.next();
         }
 
-        handle_command(cmd_str, args.iter(), &mut token_iter)?;
         if Path::new("history.txt").exists() {
             rl.append_history("history.txt")?;
         } else {
             File::create("history.txt")?;
             rl.append_history("history.txt")?;
         }
+
+        // for s in rl.history() {
+        //     println!("{s}");
+        // }
+
+        handle_command(cmd_str, args.iter(), &mut token_iter, rl.history())?;
     }
+    remove_file("history.txt")?;
     anyhow::Ok(())
 }

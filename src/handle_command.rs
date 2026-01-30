@@ -14,38 +14,43 @@ use crate::{
     util::find_exec_file,
 };
 use anyhow::Result;
+use rustyline::history::History;
 
-pub(crate) fn handle_command<'a, I, J, S>(
+pub(crate) fn handle_command<'a, I, J, S, H>(
     cmd_str: &str,
     args: J,
     token_iter: &mut Peekable<I>,
+    history: &H,
 ) -> Result<()>
 where
     I: Iterator<Item = &'a Token>,
     J: Iterator<Item = S>,
     S: AsRef<OsStr>,
+    H: History,
 {
     if let Ok(builtin) = Builtin::from_str(cmd_str) {
-        handle_builtin(builtin, args, token_iter, None, None)?;
+        handle_builtin(builtin, args, token_iter, None, None, history)?;
     } else if find_exec_file(cmd_str).is_some() {
-        handle_external_exec(cmd_str, args, token_iter, None, None)?;
+        handle_external_exec(cmd_str, args, token_iter, None, None, history)?;
     } else {
         println!("{cmd_str}: command not found")
     }
     Ok(())
 }
 
-pub(crate) fn handle_external_exec<'a, S, I, J>(
+pub(crate) fn handle_external_exec<'a, S, I, J, H>(
     cmd_str: &str,
     args: J,
     token_iter: &mut Peekable<I>,
     prev_command_output: Option<String>,
     prev_command: Option<&mut Child>,
+    history: &H,
 ) -> Result<()>
 where
     I: Iterator<Item = &'a Token>,
     J: Iterator<Item = S>,
     S: AsRef<OsStr>,
+    H: History,
 {
     let mut command = Command::new(cmd_str);
 
@@ -142,9 +147,23 @@ where
 
             // create pipeline recursively
             if let Ok(cmd) = Builtin::from_str(cmd) {
-                handle_builtin(cmd, next_args.iter(), token_iter, None, Some(&mut child))?;
+                handle_builtin(
+                    cmd,
+                    next_args.iter(),
+                    token_iter,
+                    None,
+                    Some(&mut child),
+                    history,
+                )?;
             } else {
-                handle_external_exec(cmd, next_args.iter(), token_iter, None, Some(&mut child))?;
+                handle_external_exec(
+                    cmd,
+                    next_args.iter(),
+                    token_iter,
+                    None,
+                    Some(&mut child),
+                    history,
+                )?;
             }
 
             child.wait()?;
@@ -154,17 +173,19 @@ where
     Ok(())
 }
 
-pub(crate) fn handle_builtin<'a, S, I, J>(
+pub(crate) fn handle_builtin<'a, S, I, J, H>(
     builtin: Builtin,
     args: J,
     token_iter: &mut Peekable<I>,
     prev_command_output: Option<String>,
     _prev_command: Option<&mut Child>,
+    history: &H,
 ) -> Result<()>
 where
     I: Iterator<Item = &'a Token>,
     J: Iterator<Item = S>,
     S: AsRef<OsStr>,
+    H: History,
 {
     let mut all_args: Vec<String> = args
         .map(|s| s.as_ref().to_str().unwrap().to_string())
@@ -174,14 +195,14 @@ where
         let extra_args = parse_input(&out)?;
         all_args.extend(extra_args);
     }
-    
+
     // if let Some(child) = prev_command
     // && let Some(stdout) = child.stdout.as_mut()
     // {
     //     // builtins do not read stdin
     // }
 
-    let Some(builtin_out) = invoke_builtin(builtin, all_args.iter()) else {
+    let Some(builtin_out) = invoke_builtin(builtin, all_args.iter(), history) else {
         // early return for cd
         return Ok(());
     };
@@ -247,9 +268,23 @@ where
 
             // create pipeline recursively
             if let Ok(cmd) = Builtin::from_str(cmd) {
-                handle_builtin(cmd, next_args.iter(), token_iter, Some(builtin_out), None)?;
+                handle_builtin(
+                    cmd,
+                    next_args.iter(),
+                    token_iter,
+                    Some(builtin_out),
+                    None,
+                    history,
+                )?;
             } else {
-                handle_external_exec(cmd, next_args.iter(), token_iter, Some(builtin_out), None)?;
+                handle_external_exec(
+                    cmd,
+                    next_args.iter(),
+                    token_iter,
+                    Some(builtin_out),
+                    None,
+                    history,
+                )?;
             }
         }
         Some(_t) => unreachable!(),
