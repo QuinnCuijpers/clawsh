@@ -106,10 +106,10 @@ fn main() -> anyhow::Result<()> {
     }
 
     if Path::new(&history_file).exists() {
-        rl.append_history(&history_file)?;
+        rl.save_history(&history_file)?;
     } else {
         File::create(&history_file)?;
-        rl.append_history(&history_file)?;
+        rl.save_history(&history_file)?;
     }
 
     if history_file == "/tmp/history.txt" {
