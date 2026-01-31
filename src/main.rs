@@ -105,11 +105,18 @@ fn main() -> anyhow::Result<()> {
 
     }
 
-    if Path::new(&history_file).exists() {
-        rl.save_history(&history_file)?;
-    } else {
-        File::create(&history_file)?;
-        rl.save_history(&history_file)?;
+    // can't save history directly as it will prepend #V2
+    // if Path::new(&history_file).exists() {
+    //     rl.save_history(&history_file)?;
+    // } else {
+    //     File::create(&history_file)?;
+    //     rl.save_history(&history_file)?;
+    // }
+
+    let mut file = File::create(&history_file)?;
+    for entry in rl.history() {
+        _ = file.write_all(entry.as_bytes());
+        _ = file.write_all(b"\n");
     }
 
     if history_file == "/tmp/history.txt" {
