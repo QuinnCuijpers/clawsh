@@ -122,7 +122,6 @@ impl<const N: usize> TrieNode<N> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::trie::TrieNode;
 
     #[test]
     fn auto_complete() {

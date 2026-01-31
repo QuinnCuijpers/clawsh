@@ -1,7 +1,7 @@
 use std::{fs::{self, File, OpenOptions, read}, io::{self, Write}, path::Path};
 
 use anyhow::Context;
-use codecrafters_shell::{BUILTIN_COMMANDS, handle_command::handle_command, input_parsing::{Token, parse_input, tokenize_input}, readline::TrieCompleter};
+use codecrafters_shell::{BUILTIN_COMMANDS, TrieCompleter, handle_command::handle_command, input_parsing::{Token, parse_input, tokenize_input}};
 use rustyline::{CompletionType, Config, Editor, error::ReadlineError};
 
 fn main() -> anyhow::Result<()> {
