@@ -1,5 +1,0 @@
-echo apple 
-echo pear
-history -a test.txt
-echo pear
-history -a text.txt

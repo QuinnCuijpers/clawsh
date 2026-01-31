@@ -9,7 +9,7 @@ pub enum Token {
     Pipe(String), //TODO: may not require to hold data as only one character creates this
 }
 
-pub(crate) const BUILTIN_COMMANDS: [&str; 6] = ["echo", "exit", "type", "pwd", "cd", "history"];
+pub const BUILTIN_COMMANDS: [&str; 6] = ["echo", "exit", "type", "pwd", "cd", "history"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Builtin {
@@ -37,7 +37,7 @@ impl FromStr for Builtin {
     }
 }
 
-pub(crate) fn parse_input(input: &str) -> Vec<String> {
+pub fn parse_input(input: &str) -> Vec<String> {
     let mut command_list: Vec<String> = vec![];
     let mut buf = String::new();
     let mut in_single_quotes = false;
@@ -97,7 +97,7 @@ pub(crate) fn parse_input(input: &str) -> Vec<String> {
     command_list
 }
 
-pub(crate) fn tokenize_input(input: Vec<String>) -> Option<Vec<Token>> {
+pub fn tokenize_input(input: Vec<String>) -> Option<Vec<Token>> {
     if input.is_empty() {
         eprintln!("input string was empty when attempted tokinization");
         return None;

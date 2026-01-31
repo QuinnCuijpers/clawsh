@@ -10,7 +10,8 @@ pub struct TrieCompleter {
 }
 
 impl TrieCompleter {
-    pub(crate) fn with_builtin_commands(builtin_words: &[&str]) -> Self {
+    #[must_use]
+    pub fn with_builtin_commands(builtin_words: &[&str]) -> Self {
         let mut builtin_trie = TrieNode::new();
         for word in builtin_words {
             builtin_trie.insert(word);

@@ -1,28 +1,8 @@
-mod handle_command;
-mod input_parsing;
-mod invoke;
-mod readline;
-mod trie;
-mod util;
+use std::{fs::{self, File, OpenOptions, read}, io::{self, Write}, path::Path};
 
 use anyhow::Context;
-use input_parsing::Token;
-use input_parsing::parse_input;
-use input_parsing::tokenize_input;
-use rustyline::CompletionType;
-use rustyline::Config;
-use rustyline::Editor;
-use rustyline::error::ReadlineError;
-use std::fs;
-use std::fs::File;
-use std::fs::OpenOptions;
-use std::fs::read;
-use std::io::{self, Write};
-use std::path::Path;
-
-use crate::handle_command::handle_command;
-use crate::input_parsing::BUILTIN_COMMANDS;
-use crate::readline::TrieCompleter;
+use codecrafters_shell::{BUILTIN_COMMANDS, handle_command::handle_command, input_parsing::{Token, parse_input, tokenize_input}, readline::TrieCompleter};
+use rustyline::{CompletionType, Config, Editor, error::ReadlineError};
 
 fn main() -> anyhow::Result<()> {
     let env_file = std::env::var_os("HISTFILE");

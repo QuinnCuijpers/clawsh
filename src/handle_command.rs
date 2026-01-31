@@ -16,7 +16,7 @@ use crate::{
 use anyhow::Result;
 use rustyline::history::FileHistory;
 
-pub(crate) fn handle_command<'a, I, J, S>(
+pub fn handle_command<'a, I, J, S>(
     cmd_str: &str,
     args: J,
     token_iter: &mut Peekable<I>,
