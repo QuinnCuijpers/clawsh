@@ -1,5 +1,4 @@
-use crate::input_parsing::Builtin;
-use crate::util::find_exec_file;
+use crate::{commands::Builtin, util::find_exec_file};
 use anyhow::Result;
 use rustyline::history::{FileHistory, History, SearchDirection};
 use std::{
@@ -10,7 +9,7 @@ use std::{
     fs::{File, read, write},
     io::Write,
     path::{Path, PathBuf},
-    str::FromStr,
+    str::FromStr as _
 };
 
 pub(crate) fn invoke_builtin<I, S>(

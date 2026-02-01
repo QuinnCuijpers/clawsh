@@ -4,17 +4,13 @@ use std::{
     io::Write,
     iter::Peekable,
     path::PathBuf,
-    process::{Child, Command, Stdio},
-    str::FromStr,
+    process::{Child, Command, Stdio}, str::FromStr,
 };
 
-use crate::{
-    input_parsing::{Builtin, Token, parse_input},
-    invoke::invoke_builtin,
-    util::find_exec_file,
-};
 use anyhow::Result;
 use rustyline::history::FileHistory;
+
+use crate::{commands::Builtin, invoke::invoke_builtin, parser::{Token, parse_input}, util::find_exec_file};
 
 pub fn handle_command<'a, I, J, S>(
     cmd_str: &str,

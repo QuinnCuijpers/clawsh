@@ -2,7 +2,7 @@ use faccess::PathExt;
 use rustyline::{Helper, Highlighter, Hinter, Validator};
 use rustyline::completion::Completer;
 use crate::util::start_of_last_word;
-use crate::BUILTIN_COMMANDS;
+use crate::commands::BUILTIN_COMMANDS;
 
 use crate::completion::trie::{TRIE_ASCII_SIZE, TrieNode};
 

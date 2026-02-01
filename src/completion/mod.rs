@@ -1,4 +1,4 @@
 mod trie;
-mod trie_completer;
+mod completer;
 
-pub use trie_completer::TrieCompleter as TrieCompleter;
+pub use completer::TrieCompleter as TrieCompleter;

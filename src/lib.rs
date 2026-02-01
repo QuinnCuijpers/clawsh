@@ -1,9 +1,9 @@
 pub mod handle_command;
-pub mod input_parsing;
-pub mod invoke;
-pub mod readline;
-pub mod completion;
-pub mod util;
+pub mod parser;
+mod invoke;
+mod completion;
+mod util;
+mod commands;
 
-pub use crate::input_parsing::BUILTIN_COMMANDS as BUILTIN_COMMANDS;
 pub use crate::completion::TrieCompleter;
+pub use crate::commands::BUILTIN_COMMANDS as BUILTIN_COMMANDS;
