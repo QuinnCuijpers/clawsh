@@ -1,5 +1,12 @@
+mod invoke;
+mod history;
+mod fs;
+mod string;
+
 use anyhow::Result;
 use std::str::FromStr;
+
+pub(crate) use invoke::invoke_builtin;
 
 pub const BUILTIN_COMMANDS: [&str; 6] = ["echo", "exit", "type", "pwd", "cd", "history"];
 

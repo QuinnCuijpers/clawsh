@@ -3,7 +3,7 @@ use std::io::{self, Write};
 use anyhow::Context;
 use rustyline::error::ReadlineError;
 
-use crate::{handle_command::handle_command, parser::{Token, split_words, tokenize_input}, shell::Shell};
+use crate::{parser::{Token, split_words, tokenize_input}, shell::{Shell, handle_command}};
 
 impl Shell {
     pub fn run(&mut self) -> anyhow::Result<()> {

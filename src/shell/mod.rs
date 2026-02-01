@@ -1,11 +1,18 @@
 use std::{ffi::OsString, fs::{File, OpenOptions, read}, io::Write, path::Path};
 
-use rustyline::{CompletionType, Config, Editor, error::ReadlineError, history::FileHistory};
+use rustyline::{CompletionType, Config, Editor, history::FileHistory};
 
 use crate::{BUILTIN_COMMANDS, TrieCompleter};
 
 
 mod repl;
+mod builtin_exec;
+mod exec;
+mod handle_command;
+mod pipeline;
+mod redirect;
+
+pub(crate) use handle_command::handle_command;
 
 pub struct Shell {
     rl: Editor<TrieCompleter, FileHistory>,
