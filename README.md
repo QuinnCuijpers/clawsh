@@ -1,6 +1,6 @@
 [![progress-banner](https://backend.codecrafters.io/progress/shell/58e14eb1-d9f8-4481-a18b-ed98a125946d)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
 
-This is a starting point for Rust solutions to the
+This is a shell built for the
 ["Build Your Own Shell" Challenge](https://app.codecrafters.io/courses/shell/overview).
 
 In this challenge, you'll build your own POSIX compliant shell that's capable of
@@ -11,25 +11,65 @@ REPLs, builtin commands, and more.
 **Note**: If you're viewing this repo on GitHub, head over to
 [codecrafters.io](https://codecrafters.io) to try the challenge.
 
-# Passing the first stage
+# 🦀 Clawsh
+A small, sharp, Rust‑powered shell with bite.
 
-The entry point for your `shell` implementation is in `src/main.rs`. Study and
-uncomment the relevant code, and push your changes to pass the first stage:
+Clawsh is a Unix‑style shell written in Rust.   
+It supports pipelines, redirections, builtins, and external commands.  
+Originally built as a Codecrafters challenge, it has grown and popped it's shell onto crates.io.
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
+## Features
+
+- Builtin commands (`cd`, `pwd`, `echo`, `type`, `history`)
+- Pipelines (`ls | grep foo | wc -l`)
+- Redirections (`>`, `>>`, `2>`, `2>>`)
+- External command execution
+- Persistent history with append/read/write modes
+
+---
+
+## Installation
+
+### From crates.io
+
+```
+cargo install clawsh
 ```
 
-Time to move on to the next stage!
+---
 
-# Stage 2 & beyond
+## 🧪 Usage
 
-Note: This section is for stages 2 and beyond.
+Start the shell:
 
-1. Ensure you have `cargo (1.92)` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main.rs`. This command compiles your Rust project, so it might be slow
-   the first time you run it. Subsequent runs will be fast.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+```
+clawsh
+```
+
+Examples:
+
+```
+clawsh
+$> echo hello world
+hello world
+
+clawsh
+$> ls | grep rs | wc -l
+
+clawsh
+$> history -a ~/.clawsh_history
+```
+
+---
+
+## Roadmap
+
+- [] add robust error handling
+- [] add docs
+- [] implement more builtin commands when codecrafters updates their course
+
+---
+
+## 📄 License
+
+MIT or Apache-2.0
