@@ -38,7 +38,7 @@ cargo install clawsh
 
 ---
 
-## 🧪 Usage
+## Usage
 
 Start the shell:
 
@@ -66,10 +66,11 @@ $> history -a ~/.clawsh_history
 
 - [] add robust error handling
 - [] add docs
+- [] change function signiatures to reduce generics
 - [] implement more builtin commands when codecrafters updates their course
 
 ---
 
-## 📄 License
+## License
 
 MIT or Apache-2.0

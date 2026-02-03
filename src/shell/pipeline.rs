@@ -35,7 +35,7 @@ where
     if let Ok(cmd) = Builtin::from_str(cmd) {
         builtin_exec::handle_builtin(
             cmd,
-            next_args.iter(),
+            &next_args[..],
             token_iter,
             Some(builtin_out),
             None,
@@ -44,7 +44,7 @@ where
     } else {
         exec::handle_external_exec(
             cmd,
-            next_args.iter(),
+            &next_args,
             token_iter,
             Some(builtin_out),
             None,
@@ -90,29 +90,15 @@ where
 
     let mut next_args = vec![];
     while let Some(Token::Arg(s)) = token_iter.peek() {
-        next_args.push(s);
+        next_args.push(s.clone());
         token_iter.next();
     }
 
     // create pipeline recursively
     if let Ok(cmd) = Builtin::from_str(cmd) {
-        builtin_exec::handle_builtin(
-            cmd,
-            next_args.iter(),
-            token_iter,
-            None,
-            Some(&mut child),
-            history,
-        )?;
+        builtin_exec::handle_builtin(cmd, &next_args, token_iter, None, Some(&mut child), history)?;
     } else {
-        exec::handle_external_exec(
-            cmd,
-            next_args.iter(),
-            token_iter,
-            None,
-            Some(&mut child),
-            history,
-        )?;
+        exec::handle_external_exec(cmd, &next_args, token_iter, None, Some(&mut child), history)?;
     }
 
     child.wait()?;

@@ -53,7 +53,7 @@ impl Shell {
 
             let mut args = vec![];
             while let Some(Token::Arg(s)) = token_iter.peek() {
-                args.push(s);
+                args.push(s.clone());
                 token_iter.next();
             }
 
@@ -62,7 +62,7 @@ impl Shell {
             // }
 
             let history = self.rl.history_mut();
-            handle_command(cmd_str, args.iter(), &mut token_iter, history)?;
+            handle_command(cmd_str, &args, &mut token_iter, history)?;
         }
         anyhow::Ok(())
     }

@@ -1,5 +1,3 @@
-use std::ffi::OsStr;
-
 use rustyline::history::FileHistory;
 
 use crate::commands::{
@@ -11,24 +9,17 @@ use crate::commands::{
     },
 };
 
-pub(crate) fn invoke_builtin<I, S>(
+pub(crate) fn invoke_builtin(
     cmd: Builtin,
-    args: I,
+    args: &[String],
     history: &mut FileHistory,
-) -> Option<String>
-where
-    I: Iterator<Item = S>,
-    S: AsRef<OsStr>,
-{
-    let args_str: Vec<_> = args
-        .map(|s| s.as_ref().to_str().unwrap().to_string())
-        .collect();
+) -> anyhow::Result<Option<String>> {
     match cmd {
-        Builtin::Echo => Some(invoke_echo(args_str)),
+        Builtin::Echo => Ok(Some(invoke_echo(args))),
         Builtin::Exit => unreachable!(), // unreachable as we check for exit in main beforehand
-        Builtin::Tipe => Some(invoke_type(args_str)),
-        Builtin::Pwd => Some(invoke_pwd(args_str).unwrap()),
-        Builtin::Cd => invoke_cd(args_str),
-        Builtin::History => invoke_history(&args_str[..], history),
+        Builtin::Tipe => Ok(Some(invoke_type(args))),
+        Builtin::Pwd => Ok(Some(invoke_pwd(args)?)),
+        Builtin::Cd => invoke_cd(args),
+        Builtin::History => Ok(invoke_history(args, history)),
     }
 }

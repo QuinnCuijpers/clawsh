@@ -31,31 +31,23 @@ where
 
     match redirect_symb {
         "2>" => {
-            let _ = file_options
-                .open(file_path)
-                .expect("couldnt open file for redirecting stderr");
+            let _ = file_options.open(file_path)?;
             print!("{builtin_out}");
         }
         "2>>" => {
             file_options.append(true);
-            let _ = file_options
-                .open(file_path)
-                .expect("couldnt open file for appending stderr");
+            let _ = file_options.open(file_path)?;
             print!("{builtin_out}");
         }
         ">>" | "1>>" => {
             // when writing to files linux adds a newline character at the end
             file_options.append(true);
-            let mut file = file_options
-                .open(file_path)
-                .expect("couldnt open file for stdout appending");
+            let mut file = file_options.open(file_path)?;
             let _ = file.write_all(builtin_out.as_bytes());
         }
         ">" | "1>" => {
             // when writing to files linux adds a newline character at the end
-            let mut file = file_options
-                .open(file_path)
-                .expect("couldnt open file for stdout redirection");
+            let mut file = file_options.open(file_path)?;
             let _ = file.write_all(builtin_out.as_bytes());
         }
         _ => unreachable!(),

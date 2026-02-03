@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, iter::Peekable, process::Child};
+use std::{iter::Peekable, process::Child};
 
 use rustyline::history::FileHistory;
 
@@ -8,9 +8,9 @@ use crate::{
     shell::{pipeline, redirect},
 };
 
-pub(crate) fn handle_builtin<'a, S, I, J>(
+pub(crate) fn handle_builtin<'a, I>(
     builtin: Builtin,
-    args: J,
+    args: &[String],
     token_iter: &mut Peekable<I>,
     prev_command_output: Option<String>,
     _prev_command: Option<&mut Child>,
@@ -18,15 +18,15 @@ pub(crate) fn handle_builtin<'a, S, I, J>(
 ) -> anyhow::Result<()>
 where
     I: Iterator<Item = &'a Token>,
-    J: Iterator<Item = S>,
-    S: AsRef<OsStr>,
 {
-    let mut all_args: Vec<String> = args
-        .map(|s| s.as_ref().to_str().unwrap().to_string())
-        .collect();
+    let mut all_args = vec![];
+    for s in args.into_iter() {
+        all_args.push(s.clone());
+    }
 
     if let Some(out) = prev_command_output {
         let extra_args = split_words(&out);
+
         all_args.extend(extra_args);
     }
 
@@ -36,7 +36,7 @@ where
     //     // builtins do not read stdin
     // }
 
-    let Some(builtin_out) = invoke_builtin(builtin, all_args.iter(), history) else {
+    let Some(builtin_out) = invoke_builtin(builtin, &all_args, history)? else {
         // early return for cd
         return Ok(());
     };

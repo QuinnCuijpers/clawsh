@@ -1,5 +1,4 @@
 use std::{
-    ffi::OsStr,
     io::Write,
     iter::Peekable,
     process::{Child, Command, Stdio},
@@ -12,9 +11,9 @@ use crate::{
     shell::{pipeline, redirect},
 };
 
-pub(crate) fn handle_external_exec<'a, S, I, J>(
+pub(crate) fn handle_external_exec<'a, I>(
     cmd_str: &str,
-    args: J,
+    args: &[String],
     token_iter: &mut Peekable<I>,
     prev_command_output: Option<String>,
     prev_command: Option<&mut Child>,
@@ -22,8 +21,6 @@ pub(crate) fn handle_external_exec<'a, S, I, J>(
 ) -> anyhow::Result<()>
 where
     I: Iterator<Item = &'a Token>,
-    J: Iterator<Item = S>,
-    S: AsRef<OsStr>,
 {
     let mut command = Command::new(cmd_str);
 

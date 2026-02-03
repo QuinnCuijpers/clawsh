@@ -1,36 +1,36 @@
 use std::{env, path::PathBuf};
 
-pub(crate) fn invoke_pwd<I, S>(_cmd_list: I) -> anyhow::Result<String>
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<str>,
-{
-    let curr = env::current_dir()?;
+use crate::commands::error::CommandsError;
+
+pub(crate) fn invoke_pwd(_cmd_list: &[String]) -> anyhow::Result<String> {
+    let curr = match env::current_dir() {
+        Ok(path) => path,
+        Err(e) => return Err(CommandsError::InvalidCurrentDirectory(e))?,
+    };
     Ok(format!("{}\n", curr.display()))
 }
 
-pub(crate) fn invoke_cd<I, S>(cmd_list: I) -> Option<String>
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<str>,
-{
-    let cmd_list: Vec<_> = cmd_list.into_iter().collect();
+pub(crate) fn invoke_cd(cmd_list: &[String]) -> anyhow::Result<Option<String>> {
+    let cmd_list: Vec<_> = cmd_list.iter().collect();
     if cmd_list.is_empty() {
-        return None;
+        return Ok(None);
     }
 
     let path = match cmd_list[0].as_ref() {
-        "~" => PathBuf::from(&std::env::var_os("HOME").expect("HOME env key not set")),
-        _ => PathBuf::from(&cmd_list[0].as_ref()),
+        "~" => match std::env::var_os("HOME") {
+            Some(home_path) => PathBuf::from(home_path),
+            None => return Err(CommandsError::HomeNotSet)?,
+        },
+        _ => PathBuf::from(&cmd_list[0]),
     };
     if path.exists() {
         // if cd fails then proceed to next REPL iter
         let _ = env::set_current_dir(path);
-        None
+        Ok(None)
     } else {
-        Some(format!(
+        Ok(Some(format!(
             "cd: {}: No such file or directory\n",
             path.display()
-        ))
+        )))
     }
 }

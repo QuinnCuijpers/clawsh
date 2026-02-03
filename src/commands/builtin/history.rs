@@ -11,24 +11,23 @@ pub(crate) fn invoke_history(args_str: &[String], history: &mut FileHistory) -> 
     use std::fmt::Write;
     let mut args_iter = args_str.iter();
     let length = if let Some(arg) = args_iter.next() {
-        match arg.as_str() {
-            s if s.parse::<usize>().is_ok() => {
-                let n: usize = s.parse().unwrap();
-                min(n, history.len())
-            }
-            "-r" => {
-                invoke_history_read_file(history, &mut args_iter);
-                0
-            }
-            "-w" => {
-                invoke_history_write(history, &mut args_iter);
-                0
-            }
-            "-a" => {
-                invoke_history_append(history, args_iter);
-                0
-            }
-            _ => history.len(),
+        match arg.parse::<usize>() {
+            Ok(n) => min(n, history.len()),
+            Err(_) => match arg.as_ref() {
+                "-r" => {
+                    invoke_history_read_file(history, &mut args_iter);
+                    0
+                }
+                "-w" => {
+                    invoke_history_write(history, &mut args_iter);
+                    0
+                }
+                "-a" => {
+                    invoke_history_append(history, args_iter);
+                    0
+                }
+                _ => history.len(),
+            },
         }
     } else {
         history.len()
@@ -36,11 +35,13 @@ pub(crate) fn invoke_history(args_str: &[String], history: &mut FileHistory) -> 
     let mut buf = String::new();
     for i in 0..length {
         let entry_idx = history.len() - length + i;
-        let entry = history
+        let search_result = history
             .get(entry_idx, SearchDirection::Reverse)
-            .unwrap()?
-            .entry;
-        let _ = writeln!(buf, "  {} {}", entry_idx + 1, entry);
+            .expect("Rustyline implementation of get on HistoryFile can not error");
+        if let Some(entry) = search_result {
+            let entry = entry.entry;
+            let _ = writeln!(buf, "  {} {}", entry_idx + 1, entry);
+        }
     }
     if buf.is_empty() { None } else { Some(buf) }
 }
@@ -66,8 +67,7 @@ fn invoke_history_append(history: &mut FileHistory, mut args_iter: std::slice::I
         {
             let mut set = HashSet::new();
 
-            // TODO: improve this function to get rid of the clone
-            let old_string = String::from_utf8(old_contents.clone()).unwrap();
+            let old_string = String::from_utf8_lossy(&old_contents);
             for s in old_string.lines() {
                 set.insert(s);
             }
@@ -132,7 +132,6 @@ fn invoke_history_read_file(
                 let _ = write(&history_file, new_contents);
                 let _ = history.load(Path::new(&history_file));
             }
-            let _ = history;
         }
     }
 }

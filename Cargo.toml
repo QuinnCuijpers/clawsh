@@ -1,7 +1,10 @@
 [package]
 name = "clawsh"
 version = "0.1.1"
-authors = ["Codecrafters <hello@codecrafters.io>", "Quinn Cuijpers <Quinn.Cuijpers@gmail.com"]
+authors = [
+    "Codecrafters <hello@codecrafters.io>",
+    "Quinn Cuijpers <Quinn.Cuijpers@gmail.com",
+]
 edition = "2024"
 rust-version = "1.91"
 description = "A shell built in rust for codecrafters"
@@ -10,12 +13,15 @@ license = "MIT OR Apache-2.0"
 
 
 [dependencies]
-anyhow = "1.0.100"                                # error handling
+anyhow = "1.0.100"                                                             # error handling
 faccess = "0.2.4"
-rustyline = {version = "17.0.1", features = ["derive", "with-file-history"]}
+rustyline = { version = "17.0.1", features = ["derive", "with-file-history"] }
+thiserror = "2.0.18"                                                           # error handling
 
 [lints.clippy]
 pedantic = "warn"
+unwrap_used = "warn"
+missing_docs = "warn"
 
 [[bin]]
 name = "clawsh"
