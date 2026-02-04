@@ -61,8 +61,10 @@ impl<const N: usize> TrieNode<N> {
             {
                 child.set_end_node();
             }
-            // unwrap as by prev if this value is always set
-            x = x.children[idx].as_deref_mut().unwrap();
+            //
+            x = x.children[idx]
+                .as_deref_mut()
+                .expect("by prev if statement this value is always set");
         }
     }
 

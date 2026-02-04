@@ -29,9 +29,10 @@ pub fn split_words(input: &str) -> Vec<String> {
                     buf.push(c);
                 }
                 if in_double_quotes && let Some(&c) = chars.peek() {
-                    // unwrap safe as the peek returns Some
                     match c {
-                        '\"' | '\\' => buf.push(chars.next().unwrap()),
+                        '\"' | '\\' => {
+                            buf.push(chars.next().expect("safe as the peek returns Some"))
+                        }
                         _ => buf.push('\\'),
                     }
                 }

@@ -9,12 +9,14 @@ pub enum Token {
 #[must_use]
 pub fn tokenize_input(input: Vec<String>) -> Option<Vec<Token>> {
     if input.is_empty() {
-        eprintln!("input string was empty when attempted tokinization");
         return None;
     }
     let mut tokenized = vec![];
     let mut iter = input.into_iter();
-    tokenized.push(Token::Command(iter.next().unwrap())); //first String always exists by the above if case
+    tokenized.push(Token::Command(
+        iter.next()
+            .expect("first String always exists by the above if case"),
+    ));
 
     let mut new_command = false;
     for s in iter {

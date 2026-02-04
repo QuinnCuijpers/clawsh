@@ -1,4 +1,5 @@
 use crate::commands::BUILTIN_COMMANDS;
+use crate::completion::error::CompletionError;
 use faccess::PathExt;
 use rustyline::completion::Completer;
 use rustyline::{Helper, Highlighter, Hinter, Validator};
@@ -21,10 +22,12 @@ impl TrieCompleter {
         Self { builtin_trie }
     }
 
-    pub(crate) fn get_external_candidates(prefix: &str) -> Option<Vec<String>> {
+    pub(crate) fn get_external_candidates(
+        prefix: &str,
+    ) -> Result<Option<Vec<String>>, CompletionError> {
         let Some(env_path) = std::env::var_os("PATH") else {
-            eprintln!("PATH env var not set");
-            return None;
+            // TODO: as this function is used in a trait that has a specific result it cannot return Err
+            return Err(CompletionError::PathNotSet)?;
         };
 
         let mut external_trie: TrieNode<TRIE_ASCII_SIZE> = TrieNode::new();
@@ -33,7 +36,9 @@ impl TrieCompleter {
                 if !exists {
                     continue;
                 }
-                for entry in path.read_dir().unwrap().flatten() {
+
+                let Ok(dir) = path.read_dir() else { continue };
+                for entry in dir.flatten() {
                     let file_path = entry.path();
                     let file_name = entry.file_name();
                     let name_str = file_name.to_str();
@@ -49,7 +54,7 @@ impl TrieCompleter {
                 }
             }
         }
-        external_trie.auto_complete(prefix)
+        Ok(external_trie.auto_complete(prefix))
     }
 }
 
@@ -64,8 +69,9 @@ impl Completer for TrieCompleter {
     ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
         let mut candidates = self.builtin_trie.auto_complete(line).unwrap_or(vec![]);
 
-        let mut external_candidates =
-            TrieCompleter::get_external_candidates(line).unwrap_or(vec![]);
+        let mut external_candidates = TrieCompleter::get_external_candidates(line)
+            .map_err(rustyline::error::ReadlineError::from)?
+            .unwrap_or(vec![]);
 
         candidates.append(&mut external_candidates);
 
