@@ -10,21 +10,21 @@ use rustyline::history::FileHistory;
 use crate::{
     commands::Builtin,
     parser::Token,
-    shell::{builtin_exec, error::ShellError, exec},
+    shell::{Shell, builtin_exec, error::ShellError, exec},
 };
 
 pub(crate) fn run_pipeline_builtin<'a, I>(
     builtin_out: String,
     token_iter: &mut Peekable<I>,
     history: &mut FileHistory,
-) -> anyhow::Result<()>
+) -> Result<(), ShellError>
 where
     I: Iterator<Item = &'a Token>,
 {
     let cmd = match token_iter.next() {
         Some(Token::Command(str)) => str,
-        Some(t) => return Err(ShellError::PipedIntoNonCommand(t.to_owned()))?,
-        None => return Err(ShellError::PipedIntoNothing)?,
+        Some(t) => return Err(ShellError::PipedIntoNonCommand(Some(t.to_owned())))?,
+        None => return Err(ShellError::PipedIntoNonCommand(None))?,
     };
 
     let mut next_args = vec![];
@@ -53,7 +53,7 @@ where
             history,
         )?;
     }
-    anyhow::Ok(())
+    Ok(())
 }
 
 pub(crate) fn run_pipeline_external<'a, I>(
@@ -62,7 +62,7 @@ pub(crate) fn run_pipeline_external<'a, I>(
     prev_command_output: Option<String>,
     token_iter: &mut Peekable<I>,
     history: &mut FileHistory,
-) -> anyhow::Result<()>
+) -> Result<(), ShellError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -92,14 +92,14 @@ where
             .ok_or_else(|| ShellError::ChildStdinNotPiped(command))?;
         match stdin.write_all(prev.as_bytes()) {
             Ok(()) => drop(stdin),
-            Err(e) => return Err(ShellError::WriteFailure(prev, stdin, e))?,
+            Err(e) => return Err(ShellError::WriteStdinFailure(prev, stdin, e))?,
         }
     }
 
     let cmd = match token_iter.next() {
         Some(Token::Command(str)) => str,
-        Some(t) => return Err(ShellError::PipedIntoNonCommand(t.to_owned()))?,
-        None => return Err(ShellError::PipedIntoNothing)?,
+        Some(t) => return Err(ShellError::PipedIntoNonCommand(Some(t.to_owned())))?,
+        None => return Err(ShellError::PipedIntoNonCommand(None))?,
     };
 
     let mut next_args = vec![];
@@ -118,5 +118,5 @@ where
     child
         .wait()
         .map_err(|e| ShellError::CommandWaitFailure(child, e))?;
-    anyhow::Ok(())
+    Ok(())
 }

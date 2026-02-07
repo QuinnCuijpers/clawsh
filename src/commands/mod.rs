@@ -1,5 +1,5 @@
 mod builtin;
-mod error;
+pub mod error;
 mod resolve;
 
 pub use builtin::BUILTIN_COMMANDS;

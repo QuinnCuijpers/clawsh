@@ -45,6 +45,7 @@ impl FromStr for Builtin {
             "pwd" => Ok(Builtin::Pwd),
             "cd" => Ok(Builtin::Cd),
             "history" => Ok(Builtin::History),
+            // TODO: remove anyhow dependency here
             _ => Err(anyhow::anyhow!(format!("unknown builtin {s}"))),
         }
     }

@@ -5,7 +5,7 @@ use rustyline::history::FileHistory;
 use crate::{
     commands::{Builtin, invoke_builtin},
     parser::{Token, split_words},
-    shell::{pipeline, redirect},
+    shell::{error::ShellError, pipeline, redirect},
 };
 
 pub(crate) fn handle_builtin<'a, I>(
@@ -15,7 +15,7 @@ pub(crate) fn handle_builtin<'a, I>(
     prev_command_output: Option<String>,
     _prev_command: Option<&mut Child>,
     history: &mut FileHistory,
-) -> anyhow::Result<()>
+) -> Result<(), ShellError>
 where
     I: Iterator<Item = &'a Token>,
 {

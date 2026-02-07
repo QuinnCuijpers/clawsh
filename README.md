@@ -64,10 +64,9 @@ $> history -a ~/.clawsh_history
 
 ## Roadmap
 
-- [] add robust error handling
-- [] add docs
-- [x] change function signatures to reduce generics
-- [] implement more builtin commands when codecrafters updates their course
+- [x] reduce size of SHellError enum by using more specific error types
+- [x] add docs
+- [x] implement more builtin commands when codecrafters updates their course
 
 ---
 

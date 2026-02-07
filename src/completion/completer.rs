@@ -26,7 +26,6 @@ impl TrieCompleter {
         prefix: &str,
     ) -> Result<Option<Vec<String>>, CompletionError> {
         let Some(env_path) = std::env::var_os("PATH") else {
-            // TODO: as this function is used in a trait that has a specific result it cannot return Err
             return Err(CompletionError::PathNotSet)?;
         };
 

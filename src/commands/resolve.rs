@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use crate::commands::error::CommandsError;
 
-pub(crate) fn find_exec_file(cmd: &str) -> anyhow::Result<Option<PathBuf>> {
+pub(crate) fn find_exec_file(cmd: &str) -> Result<Option<PathBuf>, CommandsError> {
     let Some(env_path) = std::env::var_os("PATH") else {
         return Err(CommandsError::PathNotSet)?;
     };

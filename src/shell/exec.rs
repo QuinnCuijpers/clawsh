@@ -8,7 +8,7 @@ use rustyline::history::FileHistory;
 
 use crate::{
     parser::Token,
-    shell::{pipeline, redirect},
+    shell::{Shell, error::ShellError, pipeline, redirect},
 };
 
 pub(crate) fn handle_external_exec<'a, I>(
@@ -18,7 +18,7 @@ pub(crate) fn handle_external_exec<'a, I>(
     prev_command_output: Option<String>,
     prev_command: Option<&mut Child>,
     history: &mut FileHistory,
-) -> anyhow::Result<()>
+) -> Result<(), ShellError>
 where
     I: Iterator<Item = &'a Token>,
 {
@@ -36,11 +36,16 @@ where
                     Some(stdout) => {
                         command.stdin(stdout);
                     }
-                    None => anyhow::bail!("expected previous command to have piped stdout"),
+                    None => return Err(ShellError::FailedToTakeStdout)?,
                 }
             }
 
-            let mut child = command.spawn()?;
+            let mut child = command
+                .spawn()
+                .map_err(|e| ShellError::CommandSpawnFailure {
+                    name: command.get_program().to_os_string(),
+                    source: e,
+                })?;
 
             #[allow(clippy::expect_used)]
             if let Some(prev) = prev_command_output {
@@ -48,10 +53,14 @@ where
                     .stdin
                     .take()
                     .expect("stdin is set by the previous if-else");
-                stdin.write_all(prev.as_bytes())?;
+                stdin
+                    .write_all(prev.as_bytes())
+                    .map_err(|e| ShellError::WriteStdinFailure(prev, stdin, e))?;
             }
 
-            child.wait()?;
+            child
+                .wait()
+                .map_err(|e| ShellError::CommandWaitFailure(child, e))?;
         }
         Some(Token::Redirect(redirect_symb)) => {
             redirect::redirect_external(&mut command, redirect_symb, token_iter)?;

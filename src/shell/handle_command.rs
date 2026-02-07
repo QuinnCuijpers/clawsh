@@ -5,7 +5,7 @@ use rustyline::history::FileHistory;
 use crate::{
     commands::{Builtin, find_exec_file},
     parser::Token,
-    shell::{builtin_exec::handle_builtin, exec::handle_external_exec},
+    shell::{builtin_exec::handle_builtin, error::ShellError, exec::handle_external_exec},
 };
 
 pub fn handle_command<'a, I>(
@@ -13,7 +13,7 @@ pub fn handle_command<'a, I>(
     args: &[String],
     token_iter: &mut Peekable<I>,
     history: &mut FileHistory,
-) -> anyhow::Result<()>
+) -> Result<(), ShellError>
 where
     I: Iterator<Item = &'a Token>,
 {

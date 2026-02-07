@@ -51,7 +51,7 @@ impl Shell {
             let mut token_iter = tokens.iter().peekable();
 
             let Some(Token::Command(cmd_str)) = token_iter.next() else {
-                // TODO: consider adding error for this
+                // TODO: consider adding error or eprintln for this
                 continue;
             };
 
